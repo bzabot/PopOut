@@ -1,10 +1,27 @@
-from MCTS import MCTS
+try:
+    from .mcts_service import MCTS
+except ImportError:
+    from mcts_service import MCTS
+
+
+BOARD_SIZE = 3
+EMPTY = "."
+WIN_LINES = (
+    ((0, 0), (0, 1), (0, 2)),
+    ((1, 0), (1, 1), (1, 2)),
+    ((2, 0), (2, 1), (2, 2)),
+    ((0, 0), (1, 0), (2, 0)),
+    ((0, 1), (1, 1), (2, 1)),
+    ((0, 2), (1, 2), (2, 2)),
+    ((0, 0), (1, 1), (2, 2)),
+    ((0, 2), (1, 1), (2, 0)),
+)
 
 
 class TicTacToe:
     def __init__(self, board=None):
         if board is None:
-            self.board = [[".", ".", "."], [".", ".", "."], [".", ".", "."]]
+            self.board = [[EMPTY for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
         else:
             self.board = [row[:] for row in board]
 
@@ -26,30 +43,14 @@ class TicTacToe:
         return [row[:] for row in self.board]
 
     def are_equal(self, pos1, pos2, pos3):
-        return pos1 == pos2 == pos3 and pos1 != "."
+        return pos1 == pos2 == pos3 and pos1 != EMPTY
 
     def check_winner(self):
-        # Lines
-        if self.are_equal(self.board[0][0], self.board[0][1], self.board[0][2]):
-            return self.board[0][0]
-        if self.are_equal(self.board[1][0], self.board[1][1], self.board[1][2]):
-            return self.board[1][0]
-        if self.are_equal(self.board[2][0], self.board[2][1], self.board[2][2]):
-            return self.board[2][0]
-
-        # Columns
-        if self.are_equal(self.board[0][0], self.board[1][0], self.board[2][0]):
-            return self.board[0][0]
-        if self.are_equal(self.board[0][1], self.board[1][1], self.board[2][1]):
-            return self.board[0][1]
-        if self.are_equal(self.board[0][2], self.board[1][2], self.board[2][2]):
-            return self.board[0][2]
-
-        # Diagonals
-        if self.are_equal(self.board[0][0], self.board[1][1], self.board[2][2]):
-            return self.board[0][0]
-        if self.are_equal(self.board[0][2], self.board[1][1], self.board[2][0]):
-            return self.board[0][2]
+        for line in WIN_LINES:
+            values = [self.board[row][col] for row, col in line]
+            if self.are_equal(*values):
+                row, col = line[0]
+                return self.board[row][col]
 
         return None
 
@@ -61,9 +62,9 @@ class TicTacToe:
 
     def available_moves(self):
         moves = []
-        for line in range(3):
-            for col in range(3):
-                if self.board[line][col] == ".":
+        for line in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if self.board[line][col] == EMPTY:
                     moves.append((line, col))
         return moves
 
@@ -73,9 +74,9 @@ class TicTacToe:
         return "X"
 
     def check_valid_move(self, line, col):
-        if line < 1 or line > 3 or col < 1 or col > 3:
+        if line < 1 or line > BOARD_SIZE or col < 1 or col > BOARD_SIZE:
             return False
-        return self.board[line - 1][col - 1] == "."
+        return self.board[line - 1][col - 1] == EMPTY
 
     def get_human_move(self):
         while True:
