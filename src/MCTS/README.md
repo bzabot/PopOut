@@ -1,0 +1,156 @@
+# MCTS Service
+
+`mcts_service.py` contains a generic Monte Carlo Tree Search implementation.
+It is not tied to TicTacToe. It can be reused for another deterministic,
+turn-based game as long as the game object implements the contract below.
+
+## Game Contract
+
+The object passed to `MCTS.search(game, player)` must provide these methods:
+
+```python
+game.clone()
+game.available_moves()
+game.play_move(player, move)
+game.next_player(player)
+game.is_terminal()
+game.check_winner()
+```
+
+### `clone()`
+
+Returns an independent copy of the current game state.
+
+MCTS modifies cloned states during search, so `clone()` must not return the
+same object. If it does, simulations will corrupt the real game.
+
+```python
+copy = game.clone()
+```
+
+### `available_moves()`
+
+Returns a list of all legal moves for the current state.
+
+The move format is decided by the game. In TicTacToe it is a tuple:
+
+```python
+(row, column)
+```
+
+For PopOut it could be a custom object, for example:
+
+```python
+Move(type="drop", column=3)
+```
+
+The only requirement is that `play_move(player, move)` knows how to apply the
+same move objects returned by `available_moves()`.
+
+### `play_move(player, move)`
+
+Applies `move` for `player` to the game state.
+
+Inside MCTS this is called only on cloned states. In the real game loop, you
+call it after receiving the chosen move:
+
+```python
+best_move = mcts.search(game, "O")
+game.play_move("O", best_move)
+```
+
+### `next_player(player)`
+
+Returns the player who acts after `player`.
+
+For a two-player game this is usually:
+
+```python
+def next_player(self, player):
+    return "O" if player == "X" else "X"
+```
+
+### `is_terminal()`
+
+Returns `True` when the game is over.
+
+Examples:
+
+- a player has won
+- the board is full and the result is a draw
+- a game-specific draw rule was reached
+
+### `check_winner()`
+
+Returns the winning player, or `None` if there is no winner.
+
+This implementation treats `None` as a draw during backpropagation, so
+`is_terminal()` must distinguish between "game is still running" and "game
+ended without a winner".
+
+Correct behavior:
+
+```python
+if game.is_terminal():
+    winner = game.check_winner()
+    # winner is "X", "O", or None for draw
+```
+
+## Usage
+
+```python
+from src.MCTS.mcts_service import MCTS
+
+game = TicTacToe()
+mcts = MCTS(iterations=1000)
+
+current_player = "O"
+best_move = mcts.search(game, current_player)
+
+if best_move is not None:
+    game.play_move(current_player, best_move)
+```
+
+## How Moves Are Chosen
+
+Each search iteration has four phases:
+
+1. Selection: walk down the tree using UCT.
+2. Expansion: add one unexplored child move.
+3. Simulation: play random moves until the game ends.
+4. Backpropagation: update visit and win statistics.
+
+At the end, the chosen move is the root child with the most visits.
+
+## Important Detail About Win Counts
+
+Each node stores wins from the perspective of the player who made the move into
+that node. This matters because MCTS must model the opponent as adversarial.
+
+If every node stores wins only from the root player's perspective, then opponent
+turns may accidentally select moves that are good for the AI instead of moves
+that are good for the opponent.
+
+## Minimal Example Game Skeleton
+
+```python
+class MyGame:
+    def clone(self):
+        return MyGame(...)
+
+    def available_moves(self):
+        return [...]
+
+    def play_move(self, player, move):
+        ...
+
+    def next_player(self, player):
+        ...
+
+    def is_terminal(self):
+        ...
+
+    def check_winner(self):
+        ...
+```
+
