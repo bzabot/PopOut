@@ -6,13 +6,12 @@ turn-based game as long as the game object implements the contract below.
 
 ## Game Contract
 
-The object passed to `MCTS.search(game, player)` must provide these methods:
+The object passed to `MCTS.search(game)` must provide these methods:
 
 ```python
 game.clone()
 game.available_moves()
-game.play_move(player, move)
-game.next_player(player)
+game.apply_move(move)
 game.is_terminal()
 game.check_winner()
 ```
@@ -44,30 +43,20 @@ For PopOut it could be a custom object, for example:
 Move(type="drop", column=3)
 ```
 
-The only requirement is that `play_move(player, move)` knows how to apply the
+The only requirement is that `apply_move(move)` knows how to apply the
 same move objects returned by `available_moves()`.
 
-### `play_move(player, move)`
+### `apply_move(move)`
 
-Applies `move` for `player` to the game state.
+Applies `move` for the game's current player to the game state and returns the
+player who moved.
 
 Inside MCTS this is called only on cloned states. In the real game loop, you
 call it after receiving the chosen move:
 
 ```python
-best_move = mcts.search(game, "O")
-game.play_move("O", best_move)
-```
-
-### `next_player(player)`
-
-Returns the player who acts after `player`.
-
-For a two-player game this is usually:
-
-```python
-def next_player(self, player):
-    return "O" if player == "X" else "X"
+best_move = mcts.search(game)
+game.apply_move(best_move)
 ```
 
 ### `is_terminal()`
@@ -105,10 +94,11 @@ game = TicTacToe()
 mcts = MCTS(iterations=1000)
 
 current_player = "O"
-best_move = mcts.search(game, current_player)
+game.turn = current_player
+best_move = mcts.search(game)
 
 if best_move is not None:
-    game.play_move(current_player, best_move)
+    game.apply_move(best_move)
 ```
 
 ## How Moves Are Chosen
@@ -135,16 +125,15 @@ that are good for the opponent.
 
 ```python
 class MyGame:
+    turn = ...
+
     def clone(self):
         return MyGame(...)
 
     def available_moves(self):
         return [...]
 
-    def play_move(self, player, move):
-        ...
-
-    def next_player(self, player):
+    def apply_move(self, move):
         ...
 
     def is_terminal(self):
@@ -153,4 +142,3 @@ class MyGame:
     def check_winner(self):
         ...
 ```
-

@@ -19,14 +19,15 @@ WIN_LINES = (
 
 
 class TicTacToe:
-    def __init__(self, board=None):
+    def __init__(self, board=None, turn="X"):
+        self.turn = turn
         if board is None:
             self.board = [[EMPTY for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
         else:
             self.board = [row[:] for row in board]
 
     def clone(self):
-        return TicTacToe(self.board)
+        return TicTacToe(self.board, self.turn)
 
     def move(self, player, line, col):
         self.board[line - 1][col - 1] = player
@@ -34,6 +35,12 @@ class TicTacToe:
     def play_move(self, player, move):
         line, col = move
         self.board[line][col] = player
+
+    def apply_move(self, move):
+        player_that_moved = self.turn
+        self.play_move(player_that_moved, move)
+        self.turn = self.next_player(player_that_moved)
+        return player_that_moved
 
     def print_board(self):
         for row in self.board:
@@ -91,28 +98,26 @@ class TicTacToe:
 
     def game_loop(self, human_player="X", mcts_iterations=1000):
         ai_player = self.next_player(human_player)
-        current_player = "X"
+        self.turn = "X"
         mcts = MCTS(iterations=mcts_iterations)
 
         while not self.is_terminal():
             self.print_board()
             print()
 
-            if current_player == human_player:
+            if self.turn == human_player:
                 print(f"{human_player} to play")
                 line, col = self.get_human_move()
-                self.move(human_player, line, col)
+                self.apply_move((line - 1, col - 1))
             else:
                 print(f"{ai_player} (MCTS) is thinking...")
-                best_move = mcts.search(self, ai_player)
+                best_move = mcts.search(self)
 
                 if best_move is None:
                     break
 
-                self.play_move(ai_player, best_move)
+                self.apply_move(best_move)
                 print(f"{ai_player} played: {best_move[0] + 1} {best_move[1] + 1}")
-
-            current_player = self.next_player(current_player)
 
         print()
         self.print_board()

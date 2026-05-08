@@ -1,0 +1,20 @@
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "PL",
+]
+
+ignore = [
+    "PLR2004",
+]
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-statements = 50
