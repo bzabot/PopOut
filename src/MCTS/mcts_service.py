@@ -6,8 +6,7 @@ implement a small contract:
 
 - ``clone()``
 - ``available_moves()``
-- ``play_move(player, move)``
-- ``next_player(player)``
+- ``apply_move(move)``
 - ``is_terminal()``
 - ``check_winner()``
 
@@ -17,7 +16,6 @@ See ``src/MCTS/README.md`` for the full contract and usage examples.
 import math
 import random
 
-
 DEFAULT_EXPLORATION_WEIGHT = math.sqrt(2)
 DRAW_SCORE = 0.5
 
@@ -25,19 +23,19 @@ DRAW_SCORE = 0.5
 class Node:
     """One state in the MCTS search tree."""
 
-    def __init__(self, state, player_to_move, parent=None, move=None):
+    def __init__(self, state, parent=None, move=None, player_that_moved=None):
         """Create a tree node.
 
         Args:
             state: Game state represented by the external game object.
-            player_to_move: Player who must play from this state.
             parent: Parent ``Node`` in the tree, or ``None`` for the root.
             move: Move that produced this state from the parent.
+            player_that_moved: Player who made ``move`` to reach this state.
         """
         self.state = state
-        self.player_to_move = player_to_move
         self.parent = parent
         self.move = move
+        self.player_that_moved = player_that_moved
         self.children = []
         self.visits = 0
         self.wins = 0.0
@@ -57,10 +55,14 @@ class Node:
         self.untried_moves.remove(move)
 
         next_state = self.state.clone()
-        next_state.play_move(self.player_to_move, move)
-        next_player = next_state.next_player(self.player_to_move)
+        player_that_moved = next_state.apply_move(move)
 
-        child = Node(next_state, next_player, parent=self, move=move)
+        child = Node(
+            next_state,
+            parent=self,
+            move=move,
+            player_that_moved=player_that_moved,
+        )
         self.children.append(child)
         return child
 
@@ -95,12 +97,6 @@ class Node:
         """
         return max(self.children, key=lambda child: child.visits)
 
-    def player_that_moved_here(self):
-        """Return the player who made ``self.move`` to reach this node."""
-        if self.parent is None:
-            return None
-        return self.parent.player_to_move
-
 
 class MCTS:
     """Monte Carlo Tree Search player.
@@ -114,18 +110,17 @@ class MCTS:
     def __init__(self, iterations=1000):
         self.iterations = iterations
 
-    def search(self, game, player):
-        """Return the best move found for ``player`` in ``game``.
+    def search(self, game):
+        """Return the best move found for the current player in ``game``.
 
         Args:
             game: Current game state implementing the MCTS game contract.
-            player: Player who must play now.
 
         Returns:
             A move object from ``game.available_moves()``, or ``None`` if the
             game is already terminal or has no legal moves.
         """
-        root = Node(game.clone(), player)
+        root = Node(game.clone())
 
         for _ in range(self.iterations):
             node = self._select(root)
@@ -151,12 +146,10 @@ class MCTS:
     def _simulate(self, node):
         """Play random moves from ``node`` until the game ends."""
         rollout_state = node.state.clone()
-        current_player = node.player_to_move
 
         while not rollout_state.is_terminal():
             move = random.choice(rollout_state.available_moves())
-            rollout_state.play_move(current_player, move)
-            current_player = rollout_state.next_player(current_player)
+            rollout_state.apply_move(move)
 
         return rollout_state.check_winner()
 
@@ -166,7 +159,7 @@ class MCTS:
 
         while current is not None:
             current.visits += 1
-            player_that_moved = current.player_that_moved_here()
+            player_that_moved = current.player_that_moved
 
             if winner == player_that_moved:
                 current.wins += 1
