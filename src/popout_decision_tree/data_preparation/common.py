@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.pop_out import DRAW_MOVE
+
 DATASETS_DIR = Path(__file__).resolve().parents[1] / "datasets"
 
 RANDOM_VS_MCTS_DATASET = DATASETS_DIR / "popout_random_vs_mcts.csv"
@@ -38,6 +40,8 @@ def build_dataset_row(turn, flat_board, best_move):
 
 def format_move_label(move):
     """Convert a PopOut move tuple into the CSV target label format."""
+    if move == DRAW_MOVE:
+        return DRAW_MOVE
     return f"{move[0]}_{move[1]}"
 
 

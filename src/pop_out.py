@@ -37,6 +37,7 @@ BLUE_DOT = f"{COLOURS['blue']}●{COLOURS['reset']}"
 EMPTY = 0
 RED_PLAYER = 1
 BLUE_PLAYER = -1
+DRAW_MOVE = "draw"
 SYMBOLS = {EMPTY: EMPTY_DOT, RED_PLAYER: RED_DOT, BLUE_PLAYER: BLUE_DOT}
 WIN_LENGTH = 4
 
@@ -49,6 +50,7 @@ class PopOut:
         self.board = [[EMPTY for _ in range(COLS)] for _ in range(ROWS)]
         self.turn = choice([-1, 1])
         self.last_player = None
+        self.game_drawn = False
 
     def print_turn(self):
         """
@@ -116,7 +118,10 @@ class PopOut:
         return new_game
 
     def available_moves(self):
-        """Return all legal drop and pop moves for the current player."""
+        """Return all legal moves for the current player."""
+        if self.game_drawn:
+            return []
+
         moves = []
         for column_index in range(COLS):
             move_column = column_index + 1
@@ -124,14 +129,20 @@ class PopOut:
                 moves.append((move_column, "d"))
             if self.board[ROWS - 1][column_index] == self.turn:
                 moves.append((move_column, "p"))
+        if self.is_full_board():
+            moves.append(DRAW_MOVE)
         return moves
 
     def apply_move(self, move):
         """Apply a move and advance the turn.
 
         Returns:
-            int: The player who made the move.
+            int | None: The player who made the move, or None for a draw.
         """
+        if move == DRAW_MOVE:
+            self.game_drawn = True
+            return None
+
         player_that_moved = self.turn
         self.make_move(move)
         self.last_player = player_that_moved
@@ -144,7 +155,11 @@ class PopOut:
 
     def is_terminal(self):
         """Return whether the game is won or has no legal moves."""
-        return self.check_winner() is not None or not self.available_moves()
+        return (
+            self.game_drawn
+            or self.check_winner() is not None
+            or not self.available_moves()
+        )
 
     def get_ans(self):
         """
@@ -259,6 +274,8 @@ class PopOut:
         Returns:
             bool: True when the move can be played, otherwise False.
         """
+        if move == DRAW_MOVE:
+            return self.is_full_board()
         if move[1] == "d" and self.board[0][move[0] - 1] != EMPTY:
             return False
         if move[1] == "p" and self.board[-1][move[0] - 1] != self.turn:
@@ -353,6 +370,9 @@ class PopOut:
         If one move creates winning lines for both players, PopOut awards the
         win to the player who just moved.
         """
+        if self.game_drawn:
+            return None
+
         wins = set()
         wins.update(self.check_horizontal_wins())
         wins.update(self.check_vertical_wins())
@@ -406,7 +426,8 @@ class PopOut:
                 self.print_turn()
 
             player_input = self.get_player_input(self.is_full_board())
-            if player_input == "draw":
+            if player_input == DRAW_MOVE:
+                self.apply_move(player_input)
                 self.print_board(show_arrow=False)
                 print(f"{COLOURS['green']}Game ended as a draw.{COLOURS['reset']}")
                 break
