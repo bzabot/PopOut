@@ -1,9 +1,9 @@
 """ID3 decision tree classifier for categorical tabular data."""
 
 import pandas as pd
-from tree_node import TreeNode
 
-from metrics import best_attribute
+from .metrics import best_attribute
+from .tree_node import TreeNode
 
 
 class ID3DecisionTree:

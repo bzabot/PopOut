@@ -48,6 +48,7 @@ class PopOut:
         """Create an empty board and randomly choose the starting player."""
         self.board = [[EMPTY for _ in range(COLS)] for _ in range(ROWS)]
         self.turn = choice([-1, 1])
+        self.last_player = None
 
     def print_turn(self):
         """
@@ -106,6 +107,44 @@ class PopOut:
             tuple: The current turn and a flattened representation of self.board.
         """
         return (self.turn, tuple(cell for row in self.board for cell in row))
+
+    def clone(self):
+        """Return an independent copy of the current game state."""
+        new_game = self.__class__.__new__(self.__class__)
+        new_game.__dict__ = self.__dict__.copy()
+        new_game.board = [row[:] for row in self.board]
+        return new_game
+
+    def available_moves(self):
+        """Return all legal drop and pop moves for the current player."""
+        moves = []
+        for column_index in range(COLS):
+            move_column = column_index + 1
+            if self.board[0][column_index] == EMPTY:
+                moves.append((move_column, "d"))
+            if self.board[ROWS - 1][column_index] == self.turn:
+                moves.append((move_column, "p"))
+        return moves
+
+    def apply_move(self, move):
+        """Apply a move and advance the turn.
+
+        Returns:
+            int: The player who made the move.
+        """
+        player_that_moved = self.turn
+        self.make_move(move)
+        self.last_player = player_that_moved
+        self.turn = self.next_player(player_that_moved)
+        return player_that_moved
+
+    def next_player(self, player):
+        """Return the opponent of ``player``."""
+        return -player
+
+    def is_terminal(self):
+        """Return whether the game is won or has no legal moves."""
+        return self.check_winner() is not None or not self.available_moves()
 
     def get_ans(self):
         """
@@ -309,7 +348,11 @@ class PopOut:
         return wins
 
     def check_winner(self):
-        """Determine the winner by checking all directions."""
+        """Return the winner, or ``None`` when there is no winner.
+
+        If one move creates winning lines for both players, PopOut awards the
+        win to the player who just moved.
+        """
         wins = set()
         wins.update(self.check_horizontal_wins())
         wins.update(self.check_vertical_wins())
@@ -317,9 +360,9 @@ class PopOut:
         wins.update(self.check_diagonal_wins_slash())
 
         if len(wins) == 0:
-            return 0
+            return None
         if len(wins) == 2:
-            return self.turn
+            return self.last_player
         return wins.pop()
 
     def print_winner(self, player):
@@ -368,13 +411,12 @@ class PopOut:
                 print(f"{COLOURS['green']}Game ended as a draw.{COLOURS['reset']}")
                 break
 
-            self.make_move(player_input)
+            self.apply_move(player_input)
             winner = self.check_winner()
-            if winner != 0:
+            if winner is not None:
                 self.print_board(show_arrow=False)
                 self.print_winner(winner)
                 break
-            self.turn *= -1
 
 
 if __name__ == "__main__":
