@@ -1,10 +1,11 @@
-"""Funções auxiliares para calcular métricas usadas pelo algoritmo ID3."""
+"""Metric helpers used by the ID3 decision tree algorithm."""
 
 import numpy as np
 import pandas as pd
 
 
 def entropy(labels):
+    """Calculate the entropy of a label distribution."""
     labels = pd.Series(labels)
 
     probabilities = labels.value_counts(normalize=True)
@@ -18,6 +19,7 @@ def entropy(labels):
 
 
 def conditional_entropy(attribute_column, labels):
+    """Calculate label entropy after splitting by one attribute column."""
     attribute_column = pd.Series(attribute_column).reset_index(drop=True)
     labels = pd.Series(labels).reset_index(drop=True)
 
@@ -40,7 +42,9 @@ def conditional_entropy(attribute_column, labels):
 
     return float(total_conditional_entropy)
 
+
 def information_gain(attribute_column, labels):
+    """Calculate the information gain from splitting on one attribute."""
     entropy_before_split = entropy(labels)
 
     entropy_after_split = conditional_entropy(attribute_column, labels)
@@ -49,7 +53,17 @@ def information_gain(attribute_column, labels):
 
     return float(gain)
 
+
 def best_attribute(X, labels):
+    """Return the attribute with highest information gain.
+
+    Args:
+        X: pandas DataFrame containing candidate attributes.
+        labels: Class labels aligned by row with ``X``.
+
+    Returns:
+        A tuple with the best column name, its gain, and all computed gains.
+    """
     gains = {}
 
     best_column = None

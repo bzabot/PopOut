@@ -1,4 +1,5 @@
-"""Funções auxiliares para discretizar características numéricas em categorias discretas."""
+"""Funções auxiliares para discretizar características
+numéricas em categorias discretas."""
 
 import numpy as np
 import pandas as pd
