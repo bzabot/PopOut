@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.mcts.mcts_service import MCTS
-from src.pop_out import BLUE_PLAYER, COLOURS, RED_PLAYER, PopOut
+from src.pop_out import BLUE_PLAYER, COLOURS, DRAW_MOVE, RED_PLAYER, PopOut
 from src.popout_decision_tree.train_popout_dt import MODEL_PATH, load_decision_tree
 
 DEFAULT_MODEL_PATH = MODEL_PATH
@@ -20,8 +20,18 @@ class PopOutDT(PopOut):
         """Return the decision tree move for the current board state."""
         turn, flat_board = self.get_board_state()
         move_label = self.tree.predict_one(build_example(turn, flat_board))
+        if move_label == DRAW_MOVE:
+            if self.is_valid(DRAW_MOVE):
+                return DRAW_MOVE
+            return self.available_moves()[0]
+
         col_str, action = move_label.split("_")
-        return (int(col_str), action)
+        move = (int(col_str), action)
+
+        if self.is_valid(move):
+            return move
+
+        return self.available_moves()[0]
 
     def run_mcts_x_dt(self, mcts_iterations=1000):
         """

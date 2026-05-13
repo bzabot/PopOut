@@ -107,10 +107,28 @@ Each search iteration has four phases:
 
 1. Selection: walk down the tree using UCT.
 2. Expansion: add one unexplored child move.
-3. Simulation: play random moves until the game ends.
+3. Simulation: play moves until the game ends.
 4. Backpropagation: update visit and win statistics.
 
 At the end, the chosen move is the root child with the most visits.
+
+The implementation adds two improvements over the plain random-rollout
+baseline:
+
+```python
+from src.mcts.mcts_service import MCTS
+
+mcts = MCTS(iterations=1000)
+```
+
+Expansion itself stays random, as in the plain MCTS baseline. Selection adds
+a small heuristic bias to UCT after children exist. The bias favors immediate
+wins, blocks immediate opponent wins, penalizes moves that give the opponent a
+direct winning reply, and prefers central columns.
+
+The rollout is tactical but still cheap enough for repeated simulations: it
+plays an immediate win if one exists, blocks an existing immediate opponent
+win, and otherwise uses a center-biased random move.
 
 ## Important Detail About Win Counts
 

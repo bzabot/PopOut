@@ -1,24 +1,24 @@
-"""PopOut terminal loop for playing against Monte Carlo Tree Search."""
+"""PopOut terminal loop for playing against parallel Monte Carlo Tree Search."""
 
 try:
     from ..pop_out import DRAW_MOVE, RED_PLAYER, PopOut
-    from .mcts_service import MCTS
+    from .mcts_service_parallel import ParallelMCTS
 except ImportError:
-    from src.mcts.mcts_service import MCTS
+    from src.mcts.mcts_service_parallel import ParallelMCTS
     from src.pop_out import DRAW_MOVE, RED_PLAYER, PopOut
 
 
-class PopOutMCTS(PopOut):
-    """PopOut game with a human-vs-MCTS terminal loop."""
+class PopOutMCTSParallel(PopOut):
+    """PopOut game with a human-vs-parallel-MCTS terminal loop."""
 
     def game_loop(self, human_player=RED_PLAYER, mcts_iterations=1500):
-        """Run an interactive human-vs-MCTS PopOut game in the terminal.
+        """Run an interactive human-vs-parallel-MCTS PopOut game in the terminal.
 
         Args:
             human_player (int): The player controlled through terminal input.
-            mcts_iterations (int): Search iterations used for each MCTS move.
+            mcts_iterations (int): Total search iterations used for each MCTS move.
         """
-        mcts = MCTS(iterations=mcts_iterations)
+        mcts = ParallelMCTS(iterations=mcts_iterations)
 
         while not self.is_terminal():
             self.print_board()
@@ -32,14 +32,14 @@ class PopOutMCTS(PopOut):
                     break
                 self.apply_move(move)
             else:
-                print("MCTS is thinking...")
+                print("Parallel MCTS is thinking...")
                 move = mcts.search(self)
 
                 if move is None:
                     break
 
                 self.apply_move(move)
-                print(f"MCTS played: {move}")
+                print(f"Parallel MCTS played: {move}")
                 if move == DRAW_MOVE:
                     self.print_board(show_arrow=False)
                     print("Draw")
@@ -55,5 +55,5 @@ class PopOutMCTS(PopOut):
 
 
 if __name__ == "__main__":
-    game = PopOutMCTS()
+    game = PopOutMCTSParallel()
     game.game_loop()
