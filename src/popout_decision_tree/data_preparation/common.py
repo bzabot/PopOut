@@ -14,7 +14,7 @@ RANDOM_VS_MCTS_DATASET = DATASETS_DIR / "popout_random_vs_mcts.csv"
 MCTS_SELF_PLAY_DATASET = DATASETS_DIR / "popout_mcts_self_play.csv"
 MCTS_VS_DT_DATASET = DATASETS_DIR / "popout_mcts_vs_dt.csv"
 INITIAL_TRAINING_DATASET = DATASETS_DIR / "popout_training_initial.csv"
-FULL_TRAINING_DATASET = DATASETS_DIR / "popout_training_full.csv"
+FULL_TRAINING_DATASET = DATASETS_DIR / "complete_popout_dataset.csv"
 
 INITIAL_TRAINING_INPUTS = (
     RANDOM_VS_MCTS_DATASET,

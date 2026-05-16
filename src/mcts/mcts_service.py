@@ -152,6 +152,11 @@ class MCTS:
             game is already terminal or has no legal moves.
         """
         self._winning_moves_cache = {}
+
+        winning_moves = self._immediate_winning_moves(game)
+        if winning_moves:
+            return self._weighted_center_choice(game, winning_moves)
+
         root = Node(game.clone(), prior_scorer=self._score_move_prior)
 
         for _ in range(self.iterations):
